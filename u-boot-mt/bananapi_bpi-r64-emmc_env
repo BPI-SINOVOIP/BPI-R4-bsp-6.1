@@ -1,0 +1,56 @@
+ipaddr=192.168.1.1
+serverip=192.168.1.254
+loadaddr=0x48000000
+bootcmd=if pstore check ; then run boot_recovery ; else run boot_emmc ; fi
+bootargs=root=/dev/mmcblk0p65
+bootconf=config-1#mt7622-bananapi-bpi-r64-pcie1
+bootconf_pcie=config-1#mt7622-bananapi-bpi-r64-pcie1
+bootconf_sata=config-1#mt7622-bananapi-bpi-r64-sata
+bootdelay=0
+bootfile=openwrt-mediatek-mt7622-bananapi_bpi-r64-initramfs-recovery.itb
+bootfile_upg=openwrt-mediatek-mt7622-bananapi_bpi-r64-squashfs-sysupgrade.itb
+bootfile_bl2=openwrt-mediatek-mt7622-bananapi_bpi-r64-emmc-preloader.bin
+bootfile_fip=openwrt-mediatek-mt7622-bananapi_bpi-r64-emmc-bl31-uboot.fip
+bootled_pwr=bpi-r64:pio:green
+bootled_rec=bpi-r64:pio:blue
+bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
+bootmenu_default=0
+bootmenu_delay=0
+bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[eMMC][0m
+bootmenu_0=Initialize environment.=run _firstboot
+bootmenu_0d=Run default boot command.=run boot_default
+bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
+bootmenu_2=Boot production system from eMMC.=run boot_production ; run bootmenu_confirm_return
+bootmenu_3=Boot recovery system from eMMC.=run boot_recovery ; run bootmenu_confirm_return
+bootmenu_4=Load production system via TFTP then write to eMMC.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
+bootmenu_5=Load recovery system via TFTP then write to eMMC.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
+bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to eMMC.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
+bootmenu_7=[31mLoad BL2 preloader via TFTP then write to eMMC.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
+bootmenu_8=Reboot.=reset
+bootmenu_9=Reset all settings to factory defaults.=run reset_factory ; reset
+boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
+boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
+boot_production=led $bootled_pwr on ; run emmc_read_production && bootm $loadaddr#$bootconf ; led $bootled_pwr off
+boot_recovery=led $bootled_rec on ; run emmc_read_recovery && bootm $loadaddr#$bootconf ; led $bootled_rec off
+boot_emmc=run boot_production ; run boot_recovery
+boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
+boot_tftp_production=tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run emmc_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
+boot_tftp_recovery=tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run emmc_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
+boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run emmc_write_bl2
+boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run emmc_write_fip
+boot_tftp=tftpboot $loadaddr $bootfile && bootm $loadaddr
+emmc_write_production=mmc dev 0 && part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_write_vol
+emmc_write_recovery=mmc dev 0 && part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_write_vol
+emmc_write_bl2=mmc dev 0 1 && mmc partconf 0 1 1 1 && mmc erase 0x0 0x400 && mmc write $loadaddr 0x0 0x100 ; mmc partconf 0 1 1 0
+emmc_write_fip=mmc dev 0 0 && mmc erase 0x1000 0x1000 && mmc write $loadaddr 0x1000 0x1000 && mmc erase 0x2000 0x800
+emmc_read_production=mmc dev 0 && part start mmc 0 $part_default part_addr && part size mmc 0 $part_default part_size && run mmc_read_vol
+emmc_read_recovery=mmc dev 0 && part start mmc 0 $part_recovery part_addr && part size mmc 0 $part_recovery part_size && run mmc_read_vol
+mmc_write_vol=imszb $fileaddr image_size && test 0x$image_size -le 0x$part_size && mmc erase 0x$part_addr 0x$image_size && mmc write $fileaddr 0x$part_addr 0x$image_size
+mmc_read_vol=mmc read $loadaddr $part_addr 0x8 && imszb $loadaddr image_size && test 0x$image_size -le 0x$part_size && mmc read $loadaddr 0x$part_addr 0x$image_size
+part_default=production
+part_recovery=recovery
+reset_factory=eraseenv && reset
+_init_env=setenv _init_env ; setenv _create_env ; saveenv ; saveenv
+_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
+_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
+_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"

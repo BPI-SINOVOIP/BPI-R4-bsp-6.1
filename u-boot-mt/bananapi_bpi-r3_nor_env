@@ -1,0 +1,60 @@
+ipaddr=192.168.1.1
+serverip=192.168.1.254
+loadaddr=0x46000000
+console=earlycon=uart8250,mmio32,0x11002000 console=ttyS0
+bootargs=root=/dev/fit0
+bootcmd=if pstore check ; then run boot_recovery ; else run boot_nor ; fi
+bootconf=config-mt7986a-bananapi-bpi-r3
+bootconf_base=config-mt7986a-bananapi-bpi-r3
+bootconf_nor=mt7986a-bananapi-bpi-r3-nor
+bootconf_nand=mt7986a-bananapi-bpi-r3-nand
+bootconf_sd=mt7986a-bananapi-bpi-r3-sd
+bootconf_emmc=mt7986a-bananapi-bpi-r3-emmc
+bootdelay=0
+bootfile=openwrt-mediatek-filogic-bananapi_bpi-r3-initramfs-recovery.itb
+bootfile_bl2=openwrt-mediatek-filogic-bananapi_bpi-r3-nor-preloader.bin
+bootfile_fip=openwrt-mediatek-filogic-bananapi_bpi-r3-nor-bl31-uboot.fip
+bootfile_upg=openwrt-mediatek-filogic-bananapi_bpi-r3-squashfs-sysupgrade.itb
+bootled_pwr=green:status
+bootled_rec=blue:status
+bootmenu_confirm_return=askenv - Press ENTER to return to menu ; bootmenu 60
+bootmenu_default=0
+bootmenu_delay=0
+bootmenu_title=      [0;34m( ( ( [1;39mOpenWrt[0;34m ) ) )  [0;36m[SPI-NOR][0m
+bootmenu_0=Initialize environment.=run _firstboot
+bootmenu_0d=Run default boot command.=run boot_default
+bootmenu_1=Boot system via TFTP.=run boot_tftp ; run bootmenu_confirm_return
+bootmenu_2=Boot production system from flash.=run boot_production ; run bootmenu_confirm_return
+bootmenu_3=Boot recovery system from flash.=run boot_recovery ; run bootmenu_confirm_return
+bootmenu_4=Load production system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_production ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
+bootmenu_5=Load recovery system via TFTP then write to flash.=setenv noboot 1 ; setenv replacevol 1 ; run boot_tftp_recovery ; setenv noboot ; setenv replacevol ; run bootmenu_confirm_return
+bootmenu_6=[31mLoad BL31+U-Boot FIP via TFTP then write to flash.[0m=run boot_tftp_write_fip ; run bootmenu_confirm_return
+bootmenu_7=[31mLoad BL2 preloader via TFTP then write to flash.[0m=run boot_tftp_write_bl2 ; run bootmenu_confirm_return
+bootmenu_8=Reboot.=reset
+bootmenu_9=Reset all settings to factory defaults.=run reset_factory ; reset
+boot_first=if button reset ; then led $bootled_rec on ; run boot_tftp_recovery ; setenv flag_recover 1 ; run boot_default ; fi ; bootmenu
+boot_default=if env exists flag_recover ; then else run bootcmd ; fi ; run boot_recovery ; setenv replacevol 1 ; run boot_tftp_forever
+boot_production=run boot_update_conf ; led $bootled_pwr on ; run nor_read_production && bootm $loadaddr#$bootconf ; led $bootled_pwr off
+boot_recovery=run boot_update_conf ; led $bootled_rec on ; run nor_read_recovery ; bootm $loadaddr#$bootconf ; led $bootled_rec off
+boot_serial_write_fip=loadx $loadaddr 115200 && run boot_write_fip
+boot_serial_write_preloader=loadx $loadaddr 115200 && run boot_write_preloader
+boot_tftp_forever=led $bootled_rec on ; while true ; do run boot_tftp_recovery ; sleep 1 ; done
+boot_tftp_production=run boot_update_conf ; tftpboot $loadaddr $bootfile_upg && env exists replacevol && iminfo $loadaddr && run nor_write_production ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
+boot_tftp_recovery=run boot_update_conf ; tftpboot $loadaddr $bootfile && env exists replacevol && iminfo $loadaddr && run nor_write_recovery ; if env exists noboot ; then else bootm $loadaddr#$bootconf ; fi
+boot_tftp=run boot_update_conf ; tftpboot $loadaddr $bootfile && bootm $loadaddr#$bootconf
+boot_tftp_write_fip=tftpboot $loadaddr $bootfile_fip && run nor_write_fip
+boot_tftp_write_bl2=tftpboot $loadaddr $bootfile_bl2 && run nor_write_bl2
+boot_update_conf=if mmc partconf 0 ; then setenv bootconf $bootconf_base#$bootconf_nor#$bootconf_emmc ; else setenv bootconf $bootconf_base#$bootconf_nor#$bootconf_sd ; fi
+boot_nor=run boot_production ; run boot_recovery
+reset_factory=mtd erase u-boot-env
+nor_write_fip=mtd erase fip && mtd write fip $loadaddr
+nor_write_bl2=mtd erase bl2 && mtd write bl2 $loadaddr
+nor_read_production=mtd read fit $loadaddr 0x0 0x20000 && imsz $loadaddr image_size && mtd read fit $loadaddr 0x0 $image_size
+nor_read_recovery=mtd read recovery $loadaddr 0x0 0x20000 && imsz $loadaddr image_size && mtd read recovery $loadaddr 0x0 $image_size
+nor_pad_size=imsz $loadaddr image_size ; setexpr image_eb 0x$image_size / 0x10000 ; setexpr tmp1 0x$image_size % 0x10000 ; test 0x$tmp1 -gt 0 && setexpr image_eb 0x$image_eb + 1 ; setexpr image_eb $image_eb * 0x10000
+nor_write_production=run nor_pad_size ; test 0x$image_eb -le 0x3000000 && mtd erase fit && mtd write fit $loadaddr 0x0 $image_eb
+nor_write_recovery=run nor_pad_size ; test 0x$image_eb -le 0x900000 && mtd erase recovery 0x0 0x$image_eb && mtd write recovery $loadaddr 0x0 $image_eb
+_init_env=setenv _init_env ; saveenv
+_firstboot=setenv _firstboot ; run _switch_to_menu ; run _init_env ; run boot_first
+_switch_to_menu=setenv _switch_to_menu ; setenv bootdelay 3 ; setenv bootmenu_delay 3 ; setenv bootmenu_0 $bootmenu_0d ; setenv bootmenu_0d ; run _bootmenu_update_title
+_bootmenu_update_title=setenv _bootmenu_update_title ; setenv bootmenu_title "$bootmenu_title       [33m$ver[0m"

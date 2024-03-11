@@ -1,0 +1,196 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2021 MediaTek Inc.
+ * Author: Sam Shih <sam.shih@mediatek.com>
+ */
+
+/dts-v1/;
+#include "mt7986.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/linux-event-codes.h>
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	model = "TP-Link TL-XDR608x";
+	compatible = "mediatek,mt7986", "mediatek,mt7986-rfb";
+
+	chosen {
+		stdout-path = &uart0;
+		tick-timer = &timer0;
+	};
+
+	memory@40000000 {
+		device_type = "memory";
+		reg = <0x40000000 0x20000000>;
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		factory {
+			label = "reset";
+			linux,code = <KEY_RESTART>;
+			gpios = <&gpio 9 GPIO_ACTIVE_LOW>;
+		};
+
+		wps {
+			label = "wps";
+			linux,code = <KEY_WPS_BUTTON>;
+			gpios = <&gpio 10 GPIO_ACTIVE_LOW>;
+		};
+
+		turbo {
+			label = "turbo";
+			linux,code = <BTN_1>;
+			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		status_red {
+			label = "red:status";
+			gpios = <&gpio 7 GPIO_ACTIVE_HIGH>;
+		};
+
+		status_green {
+			label = "green:status";
+			gpios = <&gpio 8 GPIO_ACTIVE_HIGH>;
+		};
+
+		turbo {
+			label = "green:turbo";
+			gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&uart0 {
+	mediatek,force-highspeed;
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>;
+	status = "disabled";
+};
+
+&eth {
+	status = "okay";
+	mediatek,gmac-id = <0>;
+	phy-mode = "2500base-x";
+	mediatek,switch = "mt7531";
+	reset-gpios = <&gpio 5 GPIO_ACTIVE_HIGH>;
+
+	fixed-link {
+		speed = <2500>;
+		full-duplex;
+	};
+};
+
+&pinctrl {
+	spi_flash_pins: spi0-pins-func-1 {
+		mux {
+			function = "flash";
+			groups = "spi0", "spi0_wp_hold";
+		};
+
+		conf-pu {
+			pins = "SPI2_CS", "SPI2_HOLD", "SPI2_WP";
+			drive-strength = <MTK_DRIVE_8mA>;
+			bias-pull-up = <MTK_PUPD_SET_R1R0_00>;
+		};
+
+		conf-pd {
+			pins = "SPI2_CLK", "SPI2_MOSI", "SPI2_MISO";
+			drive-strength = <MTK_DRIVE_8mA>;
+			bias-pull-down = <MTK_PUPD_SET_R1R0_00>;
+		};
+	};
+
+	spic_pins: spi1-pins-func-1 {
+		mux {
+			function = "spi";
+			groups = "spi1_2";
+		};
+	};
+
+	uart1_pins: spi1-pins-func-3 {
+		mux {
+			function = "uart";
+			groups = "uart1_2";
+		};
+	};
+
+	pwm_pins: pwm0-pins-func-1 {
+		mux {
+			function = "pwm";
+			groups = "pwm0";
+		};
+	};
+};
+
+&pwm {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm_pins>;
+	status = "okay";
+};
+
+&spi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi_flash_pins>;
+	status = "okay";
+	must_tx;
+	enhance_timing;
+	dma_ext;
+	ipm_design;
+	support_quad;
+	tick_dly = <1>;
+	sample_sel = <0>;
+
+	spi_nand@1 {
+		compatible = "spi-nand";
+		reg = <1>;
+		spi-max-frequency = <52000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "bl2";
+				reg = <0x0 0x80000>;
+			};
+
+			partition@100000 {
+				label = "config";
+				reg = <0x100000 0x60000>;
+			};
+
+			partition@160000 {
+				label = "factory";
+				reg = <0x160000 0x60000>;
+			};
+
+			partition@380000 {
+				label = "fip";
+				reg = <0x380000 0x200000>;
+			};
+
+			partition@580000 {
+				label = "ubi";
+				reg = <0x580000 0x7800000>;
+			};
+		};
+	};
+};
+
+&watchdog {
+	status = "disabled";
+};

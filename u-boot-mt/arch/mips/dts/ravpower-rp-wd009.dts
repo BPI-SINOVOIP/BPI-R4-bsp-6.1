@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (C) 2018 Stefan Roese <sr@denx.de>
+ */
+
+/dts-v1/;
+
+#include "mt7628a.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	compatible = "ravpower,rp-wd009", "ralink,mt7628a-soc";
+	model = "RAVPower RP-WD009";
+
+	aliases {
+		serial0 = &uart0;
+		spi0 = &spi0;
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+	num-cs = <2>;
+
+	spi-flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <40000000>;
+		reg = <0>;
+	};
+};
+
+&eth {
+	pinctrl-names = "default";
+	pinctrl-0 = <&ephy_router_mode>;
+};

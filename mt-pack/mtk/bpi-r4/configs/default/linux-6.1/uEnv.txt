@@ -1,0 +1,57 @@
+#
+## uEnv.txt
+#
+bpi=bananapi
+board=bpi-r4
+chip=mt7988a
+service=linux-6.1
+#
+##
+#
+device=mmc
+partition=0:5
+#
+##
+#
+kernel=uImage
+#fdt=mt7988a-bananapi-bpi-r4-emmc-snand.dtb
+fdt=mt7988a-bananapi-bpi-r4-sdmmc-snand.dtb
+#
+##
+#
+kaddr=0x46000000
+dtaddr=0x47000000
+#
+##
+#
+root=/dev/mmcblk0p6
+rootopt=rootfstype=ext4 rw rootwait
+console=ttyS0,115200n1 earlyprintk
+bootopts=loglevel=8 initcall_debug=0 androidboot.hardware=mt7988a swiotlb=512 cgroup_enable=memory cgroup_memory=1
+#
+##
+#
+abootargs=setenv bootargs board=${board} console=${console} root=${root} ${rootopt} service=${service} ${bootopts}
+#
+##
+#
+ahello=echo Banana Pi ${board} chip: $chip Service: $service
+#
+##
+#
+aboot=bootm $kaddr - $dtaddr 
+#
+##
+#
+aload_fdt=fatload $device $partition $dtaddr ${bpi}/${board}/${service}/dtb/${fdt}
+#
+##
+#
+aload_kernel=fatload $device $partition $kaddr ${bpi}/${board}/${service}/${kernel}
+#
+##
+#
+uenvcmd=run ahello abootargs aload_fdt aload_kernel aboot
+#
+## END
+#

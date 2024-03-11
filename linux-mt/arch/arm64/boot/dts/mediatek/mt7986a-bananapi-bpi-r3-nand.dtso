@@ -1,0 +1,58 @@
+/* SPDX-License-Identifier: (GPL-2.0-only OR MIT) */
+/*
+ * Authors: Daniel Golle <daniel@makrotopia.org>
+ *          Frank Wunderlich <frank-w@public-files.de>
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "bananapi,bpi-r3", "mediatek,mt7986a";
+
+	fragment@0 {
+		target-path = "/soc/spi@1100a000";
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			spi_nand: spi_nand@0 {
+				compatible = "spi-nand";
+				reg = <0>;
+				spi-max-frequency = <10000000>;
+				spi-tx-bus-width = <4>;
+				spi-rx-bus-width = <4>;
+
+				partitions {
+					compatible = "fixed-partitions";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					partition@0 {
+						label = "bl2";
+						reg = <0x0 0x200000>;
+						read-only;
+					};
+
+					partition@200000 {
+						label = "ubi";
+						reg = <0x200000 0x7e00000>;
+						compatible = "linux,ubi";
+
+						volumes {
+							nand_rootdisk: ubi-volume-fit {
+								volname = "fit";
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+
+	fragment@1 {
+		target-path = "/chosen";
+		__overlay__ {
+			rootdisk-spim-nand = <&nand_rootdisk>;
+		};
+	};
+};

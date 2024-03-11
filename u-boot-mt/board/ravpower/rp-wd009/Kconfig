@@ -1,0 +1,12 @@
+if BOARD_RAVPOWER_RP_WD009
+
+config SYS_BOARD
+	default "rp-wd009"
+
+config SYS_VENDOR
+	default "ravpower"
+
+config SYS_CONFIG_NAME
+	default "ravpower-rp-wd009"
+
+endif

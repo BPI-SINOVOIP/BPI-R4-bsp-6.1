@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Copyright (C) 2020 Matt Helsley <mhelsley@vmware.com>
+ * Weak definitions necessary to compile objtool without
+ * some subcommands (e.g. check, orc).
+ */
+
+#include <stdbool.h>
+#include <errno.h>
+#include <objtool/objtool.h>
+
+#define UNSUPPORTED(name)						\
+({									\
+	fprintf(stderr, "error: objtool: " name " not implemented\n");	\
+	return ENOSYS;							\
+})
+
+#ifndef BUILD_ORC
+int orc_dump(const char *_objname)
+{
+	UNSUPPORTED("ORC");
+}
+
+int orc_create(struct objtool_file *file)
+{
+	UNSUPPORTED("ORC");
+}
+#endif
