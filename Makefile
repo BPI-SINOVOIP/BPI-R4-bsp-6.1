@@ -37,11 +37,11 @@ pack: mt-pack
 # atf 
 atf_sdmmc:
 	rm -rf atf-mt/build_sdmmc
-	$(Q)$(MAKE) --jobserver-fds=3,4 -j  -C atf-mt BUILD_BASE=./build_sdmmc CROSS_COMPILE=$(U_CROSS_COMPILE) PLAT=mt7988 BUILD_STRING="BPI-R4 v2023-10-13-0ea67d76-1 (mt7988-sdmmc-ddr4)" MKIMAGE=${PWD}/atf-mt/tools/mkimage BOOT_DEVICE=sdmmc USE_MKIMAGE=1  BOARD_BGA=1 HAVE_DRAM_OBJ_FILE=yes  DRAM_USE_COMB=1  all
+	$(Q)$(MAKE) -j4 -C atf-mt BUILD_BASE=./build_sdmmc CROSS_COMPILE=$(U_CROSS_COMPILE) PLAT=mt7988 BUILD_STRING="BPI-R4 v2023-10-13-0ea67d76-1 (mt7988-sdmmc-ddr4)" MKIMAGE=${PWD}/atf-mt/tools/mkimage BOOT_DEVICE=sdmmc USE_MKIMAGE=1  BOARD_BGA=1 HAVE_DRAM_OBJ_FILE=yes  DRAM_USE_COMB=1  all
 
 atf_emmc:
 	rm -rf atf-mt/build_emmc
-	$(Q)$(MAKE) --jobserver-fds=3,4 -j  -C atf-mt BUILD_BASE=./build_emmc CROSS_COMPILE=$(U_CROSS_COMPILE) PLAT=mt7988 BUILD_STRING="BPI-R4 v2023-10-13-0ea67d76-1 (mt7988-emmc-ddr4)" MKIMAGE=${PWD}/atf-mt/tools/mkimage BOOT_DEVICE=emmc USE_MKIMAGE=1  BOARD_BGA=1 HAVE_DRAM_OBJ_FILE=yes  DRAM_USE_COMB=1  all
+	$(Q)$(MAKE) -j4 -C atf-mt BUILD_BASE=./build_emmc CROSS_COMPILE=$(U_CROSS_COMPILE) PLAT=mt7988 BUILD_STRING="BPI-R4 v2023-10-13-0ea67d76-1 (mt7988-emmc-ddr4)" MKIMAGE=${PWD}/atf-mt/tools/mkimage BOOT_DEVICE=emmc USE_MKIMAGE=1  BOARD_BGA=1 HAVE_DRAM_OBJ_FILE=yes  DRAM_USE_COMB=1  all
 
 # u-boot
 $(U_CONFIG_H_SDMMC): u-boot-mt
