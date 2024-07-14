@@ -4,7 +4,11 @@
 #ifndef __7Z_TYPES_H
 #define __7Z_TYPES_H
 
-#include <stddef.h>
+#ifdef __KERNEL__
+#	include <linux/stddef.h>
+#else
+#	include <stddef.h>
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
